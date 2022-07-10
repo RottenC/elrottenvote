@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<link href="favicon.ico" rel="icon" type="image/x-icon" />
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Static HTML Site Boilerplate</title>
+</head>
+
+<body onload="initsearch()">
+    <h1>Список игр для голосования и заказиков</h1>
+    
+    <div class="preps">
+      Чтобы проголосовать за игру в общем голосовании(soon) нужен appid для игры из steam
+      <br>    
+      <div id="counter">В списке много игр, точное число сейчас появится</div>
+      <br>
+      Чтобы не скроллить весь список, можно поискать 
+      <br>
+      <input type="text" id="myInput" onkeyup="searchByName()" placeholder="по названию">
+    </div>
+    <div id="listcontainer" class="preps">В списке много игр, точное число сейчас появится</div>
+
+</body>
+<style>
+body
+{
+    background:#222;
+    color: #999;
+    font-family: Helvetica;
+}
+
+h1
+{
+    width: 500px;
+    color: #900;
+    
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.preps
+{
+    margin-left: auto;
+    margin-right: auto;
+    width: 500px;
+}
+
+.game
+{
+    background:#333 !important;
+    color: #d00;    
+    margin-left: auto;
+    margin-right: auto;
+    
+    width: 500px;
+    border: 1px solid red;
+    padding: 10px;
+}
+
+a
+{
+    color: #f00;
+}
+
+input
+{
+    background:#333 !important;
+    color:#fff !important
+}
+</style>
+<script>
+function initsearch() 
+{
+  fetch("games_10_07_22.json")
+  .then(response => response.json())
+  .then(json => update_search_list(json));
+}
+function update_search_list(jjson)
+{
+  update_game_count(jjson.length)
+
+  let container = document.getElementById('listcontainer');
+  
+  
+
+  for (var key in jjson)
+  {
+    const e = document.createElement('p');
+    e.classList.add('game');
+    e.id = jjson[key].appid;
+    let appid = jjson[key].appid;
+    e.innerHTML = '<a>'+jjson[key].name+'</a>';
+    e.addEventListener("click", function () 
+    {
+      let input = e.getElementsByClassName('game_info');
+      if(input.length == 0)
+      {
+        fetch('https://store.steampowered.com/api/appdetails?appids='+appid)
+        .then(response => response.json).then(function(json)
+        {
+          const j = document.createElement('p');
+          j.classList.add('game_info');
+          j.innerHTML = '<p> app id: ' + appid + ' </p>';        
+          j.innerHTML += '<img src="https://cdn.cloudflare.steamstatic.com/steam/apps/'+appid+'/capsule_184x69.jpg"/>'
+          j.innerHTML += '<p>'+ json[appid].data.detailed_description +'</p>'
+          e.appendChild(j)
+        }).catch(function() {
+          const j = document.createElement('p');
+            j.classList.add('game_info');
+            j.innerHTML = '<p> app id: ' + appid + ' </p>';        
+            j.innerHTML += '<img src="http://cdn.akamai.steamstatic.com/steam/apps/'+appid+'/header.jpg"/>'
+            j.innerHTML += '<br><a href="https://store.steampowered.com/app/'+appid+'/">Ссылка на steam</a>'
+            e.appendChild(j)
+        });
+      }else
+      {
+        if(input[0].style.display.length == 0)
+          input[0].style.display = "none"        
+        else
+          input[0].style.display = ""
+      }
+    });
+    container.appendChild(e)
+    // console.log(key);
+  }
+}
+function searchByName() 
+{
+  let input = document.getElementById('myInput');
+  let filter = input.value.toUpperCase();
+
+  let container = document.getElementById('listcontainer');
+  let li = container.getElementsByTagName('p');
+  for (i = 0; i < li.length; i++) 
+  {
+    let a = li[i].getElementsByTagName("a")[0];
+    if(a != null)
+    {let txtValue = a.textContent || a.innerText;
+   // console.log(txtValue, filter)
+    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+      li[i].style.display = "";
+    } else {
+      li[i].style.display = "none";
+    }
+  }
+  }
+}
+function update_game_count(argument) 
+{
+  document.getElementById('counter').innerHTML = 'В списке '+argument+' игорь, но многие из них так себе';
+}
+</script>
